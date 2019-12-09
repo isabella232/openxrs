@@ -1501,6 +1501,53 @@ pub(crate) mod builder {
             self.inner.sub_image = value.inner;
             self
         }
+        pub fn depth_info_layer(mut self, value: &CompositionLayerDepthInfoKHR<'a, G>) -> Self {
+            self.inner.next = &value.inner as *const _ as *const _;
+            self
+        }
+    }
+    #[derive(Copy, Clone)]
+    #[repr(transparent)]
+    pub struct CompositionLayerDepthInfoKHR<'a, G: Graphics> {
+        inner: sys::CompositionLayerDepthInfoKHR,
+        _marker: PhantomData<&'a G>,
+    }
+    impl<'a, G: Graphics> CompositionLayerDepthInfoKHR<'a, G> {
+        #[inline]
+        pub fn new() -> Self {
+            Self {
+                inner: sys::CompositionLayerDepthInfoKHR {
+                    ty: sys::StructureType::COMPOSITION_LAYER_DEPTH_INFO_KHR,
+                    ..unsafe { mem::zeroed() }
+                },
+                _marker: PhantomData,
+            }
+        }
+        #[inline]
+        pub fn sub_image(mut self, value: SwapchainSubImage<'a, G>) -> Self {
+            self.inner.sub_image = value.inner;
+            self
+        }
+        #[inline]
+        pub fn min_depth(mut self, value: f32) -> Self {
+            self.inner.min_depth = value;
+            self
+        }
+        #[inline]
+        pub fn max_depth(mut self, value: f32) -> Self {
+            self.inner.max_depth = value;
+            self
+        }
+        #[inline]
+        pub fn near_z(mut self, value: f32) -> Self {
+            self.inner.near_z = value;
+            self
+        }
+        #[inline]
+        pub fn far_z(mut self, value: f32) -> Self {
+            self.inner.far_z = value;
+            self
+        }
     }
     #[derive(Copy, Clone)]
     #[repr(transparent)]
