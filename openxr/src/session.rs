@@ -539,9 +539,12 @@ impl FrameWaiter {
     #[inline]
     pub fn wait_secondary(
         &mut self,
+        // XXXManishearth this will be unnecessary in later versions of the runtime
+        ty: ViewConfigurationType,
     ) -> Result<(FrameState, SecondaryViewState)> {
         let mut state = [sys::SecondaryViewConfigurationStateMSFT::out(ptr::null_mut())];
         let out = unsafe {
+            (*state[0].as_mut_ptr()).view_configuration_type = ty;
             let mut secondary =
                 sys::FrameSecondaryViewConfigurationsStateMSFT::out(ptr::null_mut());
             (*secondary.as_mut_ptr()).view_configuration_count = 1;
