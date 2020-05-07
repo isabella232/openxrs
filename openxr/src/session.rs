@@ -490,4 +490,82 @@ impl FrameWaiter {
             should_render: out.should_render.into(),
         })
     }
+
+    /// Same as .wait() but also returns whether each secondary view is active
+    #[inline]
+    pub fn wait_secondary_multiple(
+        &mut self,
+        count: u32,
+    ) -> Result<(FrameState, Vec<SecondaryViewState>)> {
+        let mut vec = Vec::new();
+        vec.resize(
+            count as usize,
+            sys::SecondaryViewConfigurationStateMSFT::out(ptr::null_mut()),
+        );
+        let out = unsafe {
+            let mut secondary =
+                sys::FrameSecondaryViewConfigurationsStateMSFT::out(ptr::null_mut());
+            (*secondary.as_mut_ptr()).view_configuration_count = count;
+            (*secondary.as_mut_ptr()).states = vec.as_mut_ptr() as *mut _;
+            let mut x = sys::FrameState::out(&mut secondary as *mut _ as *mut _);
+            cvt((self.session.instance.fp().wait_frame)(
+                self.session.handle,
+                ptr::null(),
+                x.as_mut_ptr(),
+            ))?;
+            x.assume_init()
+        };
+        let secondary = vec
+            .into_iter()
+            .map(|x| {
+                let x = unsafe { x.assume_init() };
+                SecondaryViewState {
+                    ty: x.view_configuration_type,
+                    active: x.active.into(),
+                }
+            })
+            .collect();
+        Ok((
+            FrameState {
+                predicted_display_time: out.predicted_display_time,
+                predicted_display_period: out.predicted_display_period,
+                should_render: out.should_render.into(),
+            },
+            secondary,
+        ))
+    }
+
+    /// Same as .wait() but also returns whether the secondary view is active
+    #[inline]
+    pub fn wait_secondary(
+        &mut self,
+    ) -> Result<(FrameState, SecondaryViewState)> {
+        let mut state = [sys::SecondaryViewConfigurationStateMSFT::out(ptr::null_mut())];
+        let out = unsafe {
+            let mut secondary =
+                sys::FrameSecondaryViewConfigurationsStateMSFT::out(ptr::null_mut());
+            (*secondary.as_mut_ptr()).view_configuration_count = 1;
+            (*secondary.as_mut_ptr()).states = state.as_mut_ptr() as *mut _;
+            let mut x = sys::FrameState::out(&mut secondary as *mut _ as *mut _);
+            cvt((self.session.instance.fp().wait_frame)(
+                self.session.handle,
+                ptr::null(),
+                x.as_mut_ptr(),
+            ))?;
+            x.assume_init()
+        };
+        let state = unsafe { state[0].assume_init() };
+        let state = SecondaryViewState {
+            ty: state.view_configuration_type,
+            active: state.active.into()
+        };
+        Ok((
+            FrameState {
+                predicted_display_time: out.predicted_display_time,
+                predicted_display_period: out.predicted_display_period,
+                should_render: out.should_render.into(),
+            },
+            state
+        ))
+    }
 }
